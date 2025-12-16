@@ -69,8 +69,8 @@ func ReadAppKey(key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(decoded) != 32 {
-		return nil, fmt.Errorf("key must be 32 bytes after decoding")
+	if len(decoded) != 32 && len(decoded) != 16 {
+		return nil, fmt.Errorf("key must be 16 or 32 bytes after decoding")
 	}
 	return decoded, nil
 }

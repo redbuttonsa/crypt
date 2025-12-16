@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"crypto/rand"
 )
 
 func setTestAppKey(t *testing.T) {
@@ -33,6 +35,23 @@ func generateKeyPair(t *testing.T) ([]byte, string) {
 	return key, keyStr
 }
 
+func generateKeyWithSize(t *testing.T, size int) (key []byte, keyStr string) {
+	t.Helper()
+
+	raw := make([]byte, size)
+	if _, err := rand.Read(raw); err != nil {
+		t.Fatalf("rand.Read failed: %v", err)
+	}
+	keyStr = "base64:" + base64.StdEncoding.EncodeToString(raw)
+
+	var err error
+	key, err = ReadAppKey(keyStr)
+	if err != nil {
+		t.Fatalf("ReadAppKey failed: %v", err)
+	}
+	return key, keyStr
+}
+
 func TestGenerateAndReadAppKey(t *testing.T) {
 	setTestAppKey(t)
 
@@ -43,6 +62,38 @@ func TestGenerateAndReadAppKey(t *testing.T) {
 
 	if len(key) != 32 {
 		t.Errorf("Expected 32-byte key, got %d bytes", len(key))
+	}
+}
+
+func TestReadAppKeySupports128And256(t *testing.T) {
+	key128, key128Str := generateKeyWithSize(t, 16)
+	key256, key256Str := generateKeyWithSize(t, 32)
+
+	if len(key128) != 16 {
+		t.Fatalf("Expected 16 bytes, got %d", len(key128))
+	}
+	if len(key256) != 32 {
+		t.Fatalf("Expected 32 bytes, got %d", len(key256))
+	}
+
+	parsed128, err := ReadAppKey(key128Str)
+	if err != nil {
+		t.Fatalf("ReadAppKey failed for 128-bit key: %v", err)
+	}
+	if len(parsed128) != 16 {
+		t.Fatalf("Parsed key should be 16 bytes")
+	}
+
+	parsed256, err := ReadAppKey(key256Str)
+	if err != nil {
+		t.Fatalf("ReadAppKey failed for 256-bit key: %v", err)
+	}
+	if len(parsed256) != 32 {
+		t.Fatalf("Parsed key should be 32 bytes")
+	}
+
+	if _, err := ReadAppKey("base64:" + base64.StdEncoding.EncodeToString(make([]byte, 24))); err == nil {
+		t.Fatalf("Expected error for 24-byte key but got none")
 	}
 }
 
@@ -195,5 +246,38 @@ func TestGetPreviousAppKeysTrimsWhitespaceAndSkipsEmpty(t *testing.T) {
 	}
 	if !bytes.Equal(keys[0], firstKey) || !bytes.Equal(keys[1], secondKey) {
 		t.Fatalf("Keys did not match input order")
+	}
+}
+
+func TestDecryptWithMixedKeyLengths(t *testing.T) {
+	currentKey, currentKeyStr := generateKeyWithSize(t, 32)
+	previousKey, previousKeyStr := generateKeyWithSize(t, 16)
+
+	t.Setenv("APP_KEY", currentKeyStr)
+	t.Setenv("APP_PREVIOUS_KEYS", previousKeyStr)
+
+	ciphertext, err := encryptWithKey(previousKey, "legacy aes-128")
+	if err != nil {
+		t.Fatalf("encryptWithKey failed: %v", err)
+	}
+
+	plaintext, err := Decrypt(ciphertext)
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+	if plaintext != "legacy aes-128" {
+		t.Fatalf("Expected plaintext to match, got %q", plaintext)
+	}
+
+	ciphertext, err = Encrypt("current aes-256")
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+	plaintext, err = decryptWithKey(currentKey, ciphertext)
+	if err != nil || plaintext != "current aes-256" {
+		t.Fatalf("Expected decrypt with current key to succeed; got plaintext %q, err %v", plaintext, err)
+	}
+	if _, err := decryptWithKey(previousKey, ciphertext); err == nil {
+		t.Fatalf("Expected previous AES-128 key to fail decrypting AES-256 ciphertext")
 	}
 }
