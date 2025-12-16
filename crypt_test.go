@@ -2,8 +2,10 @@ package crypt
 
 import (
 	"bytes"
+	"crypto/aes"
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"strings"
 	"testing"
 
@@ -97,6 +99,12 @@ func TestReadAppKeySupports128And256(t *testing.T) {
 	}
 }
 
+func TestReadAppKeyErrorsOnPrefix(t *testing.T) {
+	if _, err := ReadAppKey("invalidprefix"); err == nil {
+		t.Fatalf("Expected prefix error")
+	}
+}
+
 func TestEncryptAndDecrypt(t *testing.T) {
 	setTestAppKey(t)
 
@@ -159,6 +167,13 @@ func TestDecryptTamperedPayloadFails(t *testing.T) {
 	}
 }
 
+func TestDecryptBase64DecodeError(t *testing.T) {
+	setTestAppKey(t)
+	if _, err := Decrypt("!not-base64"); err == nil || !strings.Contains(err.Error(), "base64 decode failed") {
+		t.Fatalf("expected base64 error, got %v", err)
+	}
+}
+
 func TestDecryptFallsBackToPreviousKey(t *testing.T) {
 	currentKey, currentKeyStr := generateKeyPair(t)
 	previousKey, previousKeyStr := generateKeyPair(t)
@@ -213,6 +228,73 @@ func TestDecryptFailsWhenNoKeysMatch(t *testing.T) {
 	}
 	if decrypted, err := Decrypt(ciphertext); err != nil || decrypted != "recoverable" {
 		t.Fatalf("Decrypt with current key failed, got %q and err %v", decrypted, err)
+	}
+}
+
+func TestDecryptFailsOnInvalidJson(t *testing.T) {
+	_, keyStr := generateKeyPair(t)
+	t.Setenv("APP_KEY", keyStr)
+
+	badJSON := base64.StdEncoding.EncodeToString([]byte("{"))
+	if _, err := Decrypt(badJSON); err == nil || !strings.Contains(err.Error(), "json decode failed") {
+		t.Fatalf("expected json decode error, got %v", err)
+	}
+}
+
+func TestDecryptErrorsOnDecodeFailures(t *testing.T) {
+	_, keyStr := generateKeyPair(t)
+	t.Setenv("APP_KEY", keyStr)
+
+	buildPayload := func(iv, val, mac string) string {
+		p := EncryptedPayload{IV: iv, Value: val, MAC: mac}
+		b, _ := json.Marshal(p)
+		return base64.StdEncoding.EncodeToString(b)
+	}
+
+	// iv decode error
+	if _, err := Decrypt(buildPayload("?", "dmFsdWU=", "bWFj")); err == nil || !strings.Contains(err.Error(), "iv decode failed") {
+		t.Fatalf("expected iv decode failure")
+	}
+
+	// value decode error
+	if _, err := Decrypt(buildPayload(base64.StdEncoding.EncodeToString(make([]byte, aes.BlockSize)), "?", "bWFj")); err == nil || !strings.Contains(err.Error(), "value decode failed") {
+		t.Fatalf("expected value decode failure")
+	}
+
+	// mac decode error
+	if _, err := Decrypt(buildPayload(base64.StdEncoding.EncodeToString(make([]byte, aes.BlockSize)), base64.StdEncoding.EncodeToString(make([]byte, aes.BlockSize)), "?")); err == nil || !strings.Contains(err.Error(), "mac decode failed") {
+		t.Fatalf("expected mac decode failure")
+	}
+}
+
+func TestDecryptErrorsOnBlockSize(t *testing.T) {
+	key, keyStr := generateKeyPair(t)
+	t.Setenv("APP_KEY", keyStr)
+
+	iv := base64.StdEncoding.EncodeToString(make([]byte, aes.BlockSize))
+	val := base64.StdEncoding.EncodeToString([]byte{1, 2, 3}) // not multiple of block size
+	mac := base64.StdEncoding.EncodeToString(computeHMACSHA256(append(make([]byte, aes.BlockSize), []byte{1, 2, 3}...), key))
+
+	payload := EncryptedPayload{IV: iv, Value: val, MAC: mac}
+	raw, _ := json.Marshal(payload)
+	enc := base64.StdEncoding.EncodeToString(raw)
+
+	if _, err := Decrypt(enc); err == nil || !strings.Contains(err.Error(), "multiple of the block size") {
+		t.Fatalf("expected block size error, got %v", err)
+	}
+}
+
+func TestEncryptFailsWithoutAppKey(t *testing.T) {
+	t.Setenv("APP_KEY", "")
+	if _, err := Encrypt("secret"); err == nil {
+		t.Fatalf("expected error when APP_KEY missing")
+	}
+}
+
+func TestGetAppKeyErrorWhenMissing(t *testing.T) {
+	t.Setenv("APP_KEY", "")
+	if _, err := GetAppKey(); err == nil {
+		t.Fatalf("expected error when APP_KEY missing")
 	}
 }
 
@@ -280,4 +362,42 @@ func TestDecryptWithMixedKeyLengths(t *testing.T) {
 	if _, err := decryptWithKey(previousKey, ciphertext); err == nil {
 		t.Fatalf("Expected previous AES-128 key to fail decrypting AES-256 ciphertext")
 	}
+}
+
+func TestPkcs7UnpadErrors(t *testing.T) {
+	if _, err := pkcs7Unpad([]byte{}); err == nil {
+		t.Fatalf("expected error on empty input")
+	}
+	if _, err := pkcs7Unpad([]byte{1, 2, 0}); err == nil {
+		t.Fatalf("expected error on zero padding")
+	}
+	if _, err := pkcs7Unpad([]byte{1, 2, 3, 2}); err == nil {
+		t.Fatalf("expected error on invalid pattern")
+	}
+}
+
+type failingReader struct{}
+
+func (f failingReader) Read(p []byte) (int, error) {
+	return 0, io.ErrUnexpectedEOF
+}
+
+func TestGenerateAppKeyRandError(t *testing.T) {
+	orig := rand.Reader
+	rand.Reader = failingReader{}
+	defer func() { rand.Reader = orig }()
+
+	if _, err := GenerateAppKey(); err == nil {
+		t.Fatalf("expected error when rand fails")
+	}
+}
+
+func TestDecryptWithKeyBase64Failure(t *testing.T) {
+	if _, err := decryptWithKey(make([]byte, 16), "???"); err == nil || !strings.Contains(err.Error(), "base64 decode failed") {
+		t.Fatalf("expected base64 decode failure")
+	}
+}
+
+func TestDumpExample(t *testing.T) {
+	dumpExample("a", 1)
 }
