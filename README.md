@@ -107,7 +107,7 @@ This guarantees all examples are valid, up-to-date, and remain functional as the
 
 <!-- api:embed:start -->
 
-### Index
+## API Index
 
 | Group | Functions |
 |------:|-----------|

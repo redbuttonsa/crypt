@@ -322,7 +322,7 @@ func renderAPI(funcs []*FuncDoc) string {
 	var buf bytes.Buffer
 
 	// ---------------- Index ----------------
-	buf.WriteString("### Index\n\n")
+	buf.WriteString("## API Index\n\n")
 	buf.WriteString("| Group | Functions |\n")
 	buf.WriteString("|------:|-----------|\n")
 
