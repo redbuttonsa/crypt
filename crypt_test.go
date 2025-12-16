@@ -3,6 +3,7 @@ package crypt
 import (
 	"bytes"
 	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -177,36 +178,6 @@ func TestDecryptTamperedPayloadFails(t *testing.T) {
 	_, err = Decrypt(tampered)
 	if err == nil || !strings.Contains(err.Error(), "HMAC validation failed") {
 		t.Errorf("Expected HMAC validation to fail, got: %v", err)
-	}
-}
-
-func TestDecryptInvalidPaddingWithValidMAC(t *testing.T) {
-	key, keyStr := generateKeyPair(t)
-	t.Setenv("APP_KEY", keyStr)
-
-	ciphertext, err := encryptWithKey(key, "pad me")
-	if err != nil {
-		t.Fatalf("encryptWithKey failed: %v", err)
-	}
-
-	raw, _ := base64.StdEncoding.DecodeString(ciphertext)
-	var payload EncryptedPayload
-	_ = json.Unmarshal(raw, &payload)
-
-	ct, _ := base64.StdEncoding.DecodeString(payload.Value)
-	ct[len(ct)-1] = 0 // corrupt padding byte but keep length
-
-	payload.Value = base64.StdEncoding.EncodeToString(ct)
-	// recompute MAC so HMAC passes
-	ivBytes, _ := base64.StdEncoding.DecodeString(payload.IV)
-	newMac := computeHMACSHA256(append(ivBytes, ct...), key)
-	payload.MAC = base64.StdEncoding.EncodeToString(newMac)
-
-	b, _ := json.Marshal(payload)
-	enc := base64.StdEncoding.EncodeToString(b)
-
-	if _, err := Decrypt(enc); err == nil || !strings.Contains(err.Error(), "invalid padding") {
-		t.Fatalf("expected padding error, got %v", err)
 	}
 }
 
@@ -462,6 +433,37 @@ func TestGenerateAppKeyRandError(t *testing.T) {
 func TestDecryptWithKeyBase64Failure(t *testing.T) {
 	if _, err := decryptWithKey(make([]byte, 16), "???"); err == nil || !strings.Contains(err.Error(), "base64 decode failed") {
 		t.Fatalf("expected base64 decode failure")
+	}
+}
+
+func TestDecryptWithKeyPaddingError(t *testing.T) {
+	key, keyStr := generateKeyPair(t)
+	t.Setenv("APP_KEY", keyStr)
+
+	iv := make([]byte, aes.BlockSize)
+	plaintext := make([]byte, aes.BlockSize)
+	plaintext[len(plaintext)-1] = 0 // invalid padding byte
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		t.Fatalf("cipher init: %v", err)
+	}
+
+	ct := make([]byte, len(plaintext))
+	mode := cipher.NewCBCEncrypter(block, iv)
+	mode.CryptBlocks(ct, plaintext)
+
+	payload := EncryptedPayload{
+		IV:    base64.StdEncoding.EncodeToString(iv),
+		Value: base64.StdEncoding.EncodeToString(ct),
+		MAC:   base64.StdEncoding.EncodeToString(computeHMACSHA256(append(iv, ct...), key)),
+	}
+
+	raw, _ := json.Marshal(payload)
+	enc := base64.StdEncoding.EncodeToString(raw)
+
+	if _, err := decryptWithKey(key, enc); err == nil || !strings.Contains(err.Error(), "invalid padding") {
+		t.Fatalf("expected padding error, got %v", err)
 	}
 }
 

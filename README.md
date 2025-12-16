@@ -112,7 +112,7 @@ This guarantees all examples are valid, up-to-date, and remain functional as the
 | Group | Functions |
 |------:|-----------|
 | **Encryption** | [Decrypt](#decrypt) [Encrypt](#encrypt) |
-| **Key management** | [GenerateAppKey](#generateappkey) [GetAppKey](#getappkey) [GetPreviousAppKeys](#getpreviousappkeys) [ReadAppKey](#readappkey) |
+| **Key management** | [GenerateAppKey](#generateappkey) [GenerateKeyToEnv](#generatekeytoenv) [GetAppKey](#getappkey) [GetPreviousAppKeys](#getpreviousappkeys) [ReadAppKey](#readappkey) [RotateKeyInEnv](#rotatekeyinenv) |
 
 
 ## Encryption
@@ -181,6 +181,23 @@ godump.Dump(key)
 // #string "base64:..."
 ```
 
+### <a id="generatekeytoenv"></a>GenerateKeyToEnv · mutates-filesystem
+
+GenerateKeyToEnv mimics Laravel's key:generate.
+It generates a new APP_KEY and writes it to the provided .env path.
+Other keys are preserved; APP_KEY is replaced/added.
+
+_Example: generate and write APP_KEY to a temp .env_
+
+```go
+tmp := filepath.Join(os.TempDir(), ".env")
+key, err := crypt.GenerateKeyToEnv(tmp)
+godump.Dump(err, key)
+
+// #error <nil>
+// #string "base64:..."
+```
+
 ### <a id="getappkey"></a>GetAppKey · readonly
 
 GetAppKey retrieves the APP_KEY from the environment and parses it.
@@ -235,6 +252,23 @@ godump.Dump(len(key128), len(key256))
 
 // #int 16
 // #int 32
+```
+
+### <a id="rotatekeyinenv"></a>RotateKeyInEnv · mutates-filesystem
+
+RotateKeyInEnv mimics Laravel's key:rotate.
+It moves the current APP_KEY into APP_PREVIOUS_KEYS (prepended) and writes a new APP_KEY.
+
+_Example: rotate APP_KEY and prepend old key to APP_PREVIOUS_KEYS_
+
+```go
+tmp := filepath.Join(os.TempDir(), ".env")
+_ = os.WriteFile(tmp, []byte("APP_KEY=base64:oldkey...\n"), 0o644)
+newKey, err := crypt.RotateKeyInEnv(tmp)
+godump.Dump(err == nil, newKey != "")
+
+// #bool true
+// #bool true
 ```
 <!-- api:embed:end -->
 
