@@ -22,11 +22,12 @@
 
 # Features
 
-- AES-128/256-CBC + HMAC-SHA256 payloads identical to Laravel
-- Key rotation: decrypt falls back through `APP_PREVIOUS_KEYS`
-- `base64:` key parsing (16- or 32-byte keys)
-- Focused, table-driven tests for tampering, rotation, and key sizes
-- Zero dependencies beyond the Go standard library
+- AES-128 / AES-256 encryption compatible with Laravel
+- Authenticated encryption (AES-CBC + HMAC)
+- Transparent key rotation via `APP_PREVIOUS_KEYS`
+- Zero dependencies (stdlib only)
+- Deterministic, testable API
+- Safe defaults with explicit failure modes
 
 ## Install
 
@@ -66,14 +67,18 @@ func main() {
 }
 ```
 
-## Key format and rotation
+Here’s a cleaner, tighter rewrite that keeps the same meaning but reads more confidently and fluently:
 
-- `APP_KEY` **must** be prefixed with `base64:` and decode to **16 bytes (AES-128)** or **32 bytes (AES-256)**.
-- `APP_PREVIOUS_KEYS` is optional; provide a comma-delimited list of older keys (same format).  
-  Decrypt will try the current key first, then each previous key until one succeeds.
-- Encrypt **always** uses the current `APP_KEY`; no auto re-encrypt is performed on decrypt.
+## Key format & rotation
 
-Example:
+`crypt` follows Laravel’s key format and rotation model.
+
+* **`APP_KEY`** must be prefixed with `base64:` and decode to either **16 bytes (AES-128)** or **32 bytes (AES-256)**.
+* **`APP_PREVIOUS_KEYS`** is optional and may contain a comma-separated list of older keys in the same format.
+* During decryption, the current key is tried first, followed by any previous keys.
+* Encryption **always** uses the current `APP_KEY`; previous keys are never used for encryption.
+
+### Example
 
 ```bash
 export APP_KEY="base64:J63qRTDLub5NuZvP+kb8YIorGS6qFYHKVo6u7179stY="
