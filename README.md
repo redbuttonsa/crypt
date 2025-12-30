@@ -22,11 +22,11 @@
 
 # Features
 
-- 🔐 AES-128/256-CBC + HMAC-SHA256 payloads identical to Laravel
-- ♻️ Key rotation: decrypt falls back through `APP_PREVIOUS_KEYS`
-- 🔑 `base64:` key parsing (16- or 32-byte keys)
-- 🧪 Focused, table-driven tests for tampering, rotation, and key sizes
-- 📦 Zero dependencies beyond the Go standard library
+- AES-128/256-CBC + HMAC-SHA256 payloads identical to Laravel
+- Key rotation: decrypt falls back through `APP_PREVIOUS_KEYS`
+- `base64:` key parsing (16- or 32-byte keys)
+- Focused, table-driven tests for tampering, rotation, and key sizes
+- Zero dependencies beyond the Go standard library
 
 ## Install
 
